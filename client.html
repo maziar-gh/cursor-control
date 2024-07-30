@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Touch to Mouse</title>
+  <style>
+    body, html {
+      height: 100%;
+      margin: 0;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      background-color: #f0f0f0;
+      overflow: hidden; /* Prevent scrolling */
+    }
+    #touchArea {
+      width: 100vw;  /* Full viewport width */
+      height: 100vh; /* Full viewport height */
+      background-color: rgba(255, 255, 255, 0.5); /* Semi-transparent background for visibility */
+      position: absolute; /* Position absolutely to cover the entire viewport */
+      top: 0;
+      left: 0;
+      cursor: crosshair; /* Optional: crosshair cursor for visual feedback */
+    }
+    #cursor {
+      position: absolute;
+      width: 30px; /* Adjust size if necessary */
+      height: 30px;
+      background-image: url('cursor.webp'); /* Adjust path */
+      background-size: contain;
+      pointer-events: none;
+      display: block; /* Ensure it's visible */
+    }
+  </style>
+</head>
+<body>
+  <div id="touchArea"></div>
+  <div id="cursor"></div>
+  <script>
+    const socket = new WebSocket('ws://localhost:3000');
+
+    socket.onopen = () => {
+      console.log('WebSocket connection established');
+    };
+
+    socket.onerror = error => {
+      console.error('WebSocket error:', error);
+    };
+
+    const touchArea = document.getElementById('touchArea');
+    const cursor = document.getElementById('cursor');
+
+    touchArea.addEventListener('touchmove', event => {
+      const touch = event.touches[0];
+      const message = {
+        type: 'move',
+        x: touch.clientX,
+        y: touch.clientY
+      };
+      console.log('Sending touch move message:', message);
+      socket.send(JSON.stringify(message));
+    });
+
+    touchArea.addEventListener('mousemove', event => {
+      if (event.buttons > 0) {
+        const message = {
+          type: 'move',
+          x: event.clientX,
+          y: event.clientY
+        };
+        console.log('Sending mouse move message:', message);
+        socket.send(JSON.stringify(message));
+      }
+    });
+
+    socket.onmessage = event => {
+      console.log('Received message from server:', event.data);
+      try {
+        const message = JSON.parse(event.data);
+        if (message.type === 'update') {
+          console.log('Updating cursor position to:', message.x, message.y);
+          cursor.style.left = `${message.x}px`;
+          cursor.style.top = `${message.y}px`;
+        }
+      } catch (error) {
+        console.error('Error parsing message:', error);
+      }
+    };
+  </script>
+</body>
+</html>

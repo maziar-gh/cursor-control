@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Mouse Monitor</title>
+  <style>
+    body, html {
+      height: 100%;
+      margin: 0;
+      overflow: hidden; /* Prevent scrolling */
+      background-color: #000; /* Dark background for contrast */
+    }
+    #cursor {
+      position: absolute;
+      width: 24px;
+      height: 24px;
+      border-radius: 50%;
+      pointer-events: none;
+      box-shadow: 0 0 10px rgba(255, 255, 255, 0.8), 0 0 20px rgba(255, 255, 255, 0.6), 0 0 30px rgba(255, 255, 255, 0.4);
+      animation: shine 2s infinite;
+    }
+    @keyframes shine {
+      0% {
+        box-shadow: 0 0 10px rgba(255, 255, 255, 0.8), 0 0 20px rgba(255, 255, 255, 0.6), 0 0 30px rgba(255, 255, 255, 0.4);
+      }
+      50% {
+        box-shadow: 0 0 20px rgba(255, 255, 255, 1), 0 0 40px rgba(255, 255, 255, 0.8), 0 0 60px rgba(255, 255, 255, 0.6);
+      }
+      100% {
+        box-shadow: 0 0 10px rgba(255, 255, 255, 0.8), 0 0 20px rgba(255, 255, 255, 0.6), 0 0 30px rgba(255, 255, 255, 0.4);
+      }
+    }
+  </style>
+</head>
+<body>
+  <div id="cursor"></div>
+  <script>
+    const socket = new WebSocket('ws://localhost:3000');
+
+    socket.onopen = () => {
+      console.log('WebSocket connection established');
+    };
+
+    socket.onerror = error => {
+      console.error('WebSocket error:', error);
+    };
+
+    const cursor = document.getElementById('cursor');
+
+    socket.onmessage = event => {
+      console.log('Received message from server:', event.data);
+      try {
+        const message = JSON.parse(event.data);
+        if (message.type === 'update') {
+          console.log('Updating cursor position to:', message.x, message.y);
+          cursor.style.left = `${message.x}px`;
+          cursor.style.top = `${message.y}px`;
+        }
+      } catch (error) {
+        console.error('Error parsing message:', error);
+      }
+    };
+  </script>
+</body>
+</html>
